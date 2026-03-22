@@ -97,3 +97,9 @@ The Doctor constructor takes `projectRoot: string` — NOT `StupidConfig`. This 
 - `packages/core/src/infrastructure/doctor.ts` — new file with Doctor class
 - `packages/core/src/index.ts` — extended with Doctor, DoctorCheck, DoctorReport, parseConfigFile exports
 - `packages/core/src/__tests__/doctor.test.ts` — new test file with ≥15 tests
+
+## Observability Impact
+
+- **Signals introduced:** `DoctorReport` is the first structured health-check surface in the codebase. Each `DoctorCheck` has `name`, `status`, `message`, `details` — future agents can call `new Doctor(root).check()` programmatically to assess project state.
+- **Inspection:** A future agent inspects this task's output by instantiating `Doctor` and reading the `checks` array. No config required — just a `projectRoot` string.
+- **Failure visibility:** Corrupt lock files, invalid JSON state, SQLite integrity failures, stale worktrees, and Zod config validation errors all produce `DoctorCheck` entries with `status: "fail"` or `"warn"` and human-readable `details`.

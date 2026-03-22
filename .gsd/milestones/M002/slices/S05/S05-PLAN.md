@@ -21,7 +21,7 @@
 
 ## Tasks
 
-- [ ] **T01: Implement Doctor core class with types and unit tests** `est:45m`
+- [x] **T01: Implement Doctor core class with types and unit tests** `est:45m`
   - Why: Produces the `Doctor` class that S06 integration test consumes and that the CLI command wraps. Types must exist first; tests prove all 5 checks work.
   - Files: `packages/core/src/types/index.ts`, `packages/core/src/infrastructure/doctor.ts`, `packages/core/src/index.ts`, `packages/core/src/__tests__/doctor.test.ts`
   - Do: (1) Add `DoctorCheck` and `DoctorReport` interfaces to `types/index.ts`. (2) Create `Doctor` class in `infrastructure/doctor.ts` with 5 private check methods and one public `check()` that returns `DoctorReport`. Constructor takes `projectRoot: string`. For lock file: parse JSON, verify pid/startedAt/heartbeat, detect dead PIDs. For state.json: parse JSON, verify plan/progress/slices structure. For SQLite DBs: open MEMORY.db and routing.db with `readonly: true`, run `PRAGMA integrity_check`. For worktrees: call `WorktreeManager.listWorktrees()`, flag `stupid/` branches with missing directories. For config: use `parseConfigFile()` + `deepMerge()` + `StupidConfigSchema.safeParse()`. (3) Export `Doctor`, `DoctorCheck`, `DoctorReport`, and `parseConfigFile` from `packages/core/src/index.ts`. (4) Write comprehensive unit tests using `mkdtempSync`/`rmSync` pattern from crash-recovery.test.ts — cover clean state, missing .stupid/, corrupt lock, stale lock (dead PID), corrupt state.json, invalid state structure, corrupt SQLite, valid SQLite, stale worktrees (mock listWorktrees), invalid config YAML, missing config.
@@ -34,6 +34,17 @@
   - Do: (1) Create `doctorCommand()` in `packages/cli/src/commands/doctor.ts` following `statusCommand` pattern — try `loadConfig()` for projectRoot with `process.cwd()` fallback, instantiate `Doctor(projectRoot)`, call `check()`, print each check with ✅/⚠️/❌ icons via chalk, exit code 1 if any check has status "fail". (2) Register in `cli.ts`: import `doctorCommand`, add `program.command("doctor").description("Check .stupid/ directory health").action(...)`. (3) Add `doctor --help` test to `cli.test.ts`. (4) Update the existing `--help lists all N commands` test to include "doctor" and bump the command count.
   - Verify: `npm run build && cd packages/cli && npx vitest run src/__tests__/cli.test.ts` — all tests pass including doctor; `node packages/cli/dist/cli.js doctor --help` shows description
   - Done when: `stupid doctor` prints health report with colored output, exit code reflects check results, CLI tests pass
+
+## Observability / Diagnostics
+
+- **Runtime signals:** `DoctorReport.checks` array contains per-check `status` ("pass"/"fail"/"warn") and `message`/`details` fields. The CLI renders these with colored icons (✅/⚠️/❌). Exit code 0 = all pass, 1 = any fail.
+- **Inspection surfaces:** Run `stupid doctor` to inspect `.stupid/` health. The `Doctor.check()` method returns a structured `DoctorReport` that includes timestamps and per-check detail strings for programmatic consumption.
+- **Failure visibility:** Each check category (lock, state, DB, worktrees, config) returns a named `DoctorCheck` with `details` explaining what went wrong (e.g., Zod validation errors for config, "Stale lock held by PID 12345" for locks, integrity_check output for SQLite). Corrupt state is surfaced, never silently swallowed.
+- **Redaction:** No secrets are checked or exposed. Config validation only reports schema shape errors, not config values.
+
+## Verification — Failure Path
+
+- `cd packages/core && npx vitest run src/__tests__/doctor.test.ts` — includes tests for corrupt lock JSON → fail, corrupt state JSON → fail, corrupt SQLite → fail, invalid YAML config → fail, dead PID lock → warn. These prove Doctor correctly surfaces broken state.
 
 ## Files Likely Touched
 

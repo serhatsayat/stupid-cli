@@ -246,3 +246,18 @@ export interface RoutingRecord {
   errorType?: ProviderErrorType;
   timestamp: string;
 }
+
+// ─── Doctor Types ─────────────────────────────────────────────
+
+export interface DoctorCheck {
+  name: string;
+  status: "pass" | "fail" | "warn";
+  message: string;
+  details?: string;
+}
+
+export interface DoctorReport {
+  checks: DoctorCheck[];
+  passed: boolean; // true if zero "fail" checks
+  timestamp: string;
+}

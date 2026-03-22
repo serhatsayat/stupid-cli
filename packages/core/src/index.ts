@@ -26,6 +26,8 @@ export type {
   ComplexityTier,
   RoutingRecord,
   WorktreeMode,
+  DoctorCheck,
+  DoctorReport,
 } from "./types/index.js";
 
 // ─── Config ──────────────────────────────────────────────────
@@ -34,6 +36,7 @@ export {
   DEFAULT_CONFIG,
   StupidConfigSchema,
   deepMerge,
+  parseConfigFile,
 } from "./config/config.js";
 
 // ─── Token Profiles ──────────────────────────────────────────
@@ -106,6 +109,7 @@ export {
 } from "./infrastructure/provider-retry.js";
 export type { RetryResult } from "./infrastructure/provider-retry.js";
 export { WorktreeManager } from "./infrastructure/worktree-manager.js";
+export { Doctor } from "./infrastructure/doctor.js";
 
 // ─── Memory ─────────────────────────────────────────────────
 export { ProjectMemory } from "./memory/project-memory.js";
