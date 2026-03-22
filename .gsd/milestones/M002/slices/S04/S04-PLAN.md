@@ -54,7 +54,7 @@
   - Verify: `npm run typecheck --workspace=packages/core` passes; existing tests still pass
   - Done when: `WorktreeMode`, `IWorktreeManager`, and `worktreeMode` config field all compile cleanly
 
-- [ ] **T02: Implement WorktreeManager class with unit tests** `est:1h`
+- [x] **T02: Implement WorktreeManager class with unit tests** `est:1h`
   - Why: Core implementation — the `WorktreeManager` class implements all 3 isolation modes. Unit tests with mocked `execSync` verify correct git command sequences per mode.
   - Files: `packages/core/src/infrastructure/worktree-manager.ts`, `packages/core/src/__tests__/worktree-manager.test.ts`
   - Do: Create `WorktreeManager` class following `PRBuilder` pattern. Implement `worktree` mode (git worktree add/remove, squash merge), `branch` mode (checkout -b, merge --squash), `none` mode (no-ops for create/merge/teardown, direct commits). Add `listWorktrees()` static. Write unit tests mocking `execSync` for each mode and method.

@@ -97,6 +97,13 @@ Write comprehensive unit tests with mocked `execSync` verifying correct git comm
 - `packages/core/src/workflow/pr-builder.ts` — reference pattern for `execSync` usage and commit format
 - `packages/core/src/__tests__/pr-builder.test.ts` — reference pattern for mocking `execSync` in tests
 
+## Observability Impact
+
+- **Signals changed:** `WorktreeManager` methods throw descriptive `Error` instances on git failures. The error message includes the failed git command and captured stderr, making failures diagnosable without extra logging.
+- **Inspection surfaces:** `WorktreeManager.listWorktrees(projectRoot)` static method returns active worktree paths — used by S05 Doctor to detect stale worktrees. `getMode()` returns the active isolation mode for runtime inspection.
+- **How a future agent inspects this task:** `grep -r "WorktreeManager" packages/core/src/infrastructure/` confirms the class exists. `grep "implements IWorktreeManager" packages/core/src/infrastructure/worktree-manager.ts` verifies interface compliance. Unit test file covers all 3 modes × all methods.
+- **Failure visibility:** Git command stderr is captured and included in thrown error messages (e.g., merge conflict, missing worktree, dirty state). Unknown sliceId in `merge()` throws with message identifying the missing tracking entry.
+
 ## Expected Output
 
 - `packages/core/src/infrastructure/worktree-manager.ts` — complete `WorktreeManager` class with all 3 modes
