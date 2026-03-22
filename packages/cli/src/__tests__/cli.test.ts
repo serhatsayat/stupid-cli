@@ -14,9 +14,9 @@ const cliPath = resolve(__dirname, "../../dist/cli.js");
  * The smoke test must run after `npm run build --workspace=packages/cli`.
  */
 describe("CLI argument parsing", () => {
-  const COMMANDS = ["auto", "status", "recall", "init", "cost"] as const;
+  const COMMANDS = ["auto", "status", "recall", "init", "cost", "doctor"] as const;
 
-  it("--help lists all 6 commands", () => {
+  it("--help lists all 7 commands", () => {
     const output = execSync(`node ${cliPath} --help`, { encoding: "utf-8" });
     // Default command is "run" behavior (task argument on root program)
     for (const cmd of COMMANDS) {
@@ -54,6 +54,11 @@ describe("CLI argument parsing", () => {
   it("cost --help shows cost report description", () => {
     const output = execSync(`node ${cliPath} cost --help`, { encoding: "utf-8" });
     expect(output.toLowerCase()).toContain("cost");
+  });
+
+  it("doctor --help shows health check description", () => {
+    const output = execSync(`node ${cliPath} doctor --help`, { encoding: "utf-8" });
+    expect(output.toLowerCase()).toContain("health");
   });
 
   it("root program accepts --dry-run option", () => {

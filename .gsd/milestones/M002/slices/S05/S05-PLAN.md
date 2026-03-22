@@ -28,7 +28,7 @@
   - Verify: `cd packages/core && npx vitest run src/__tests__/doctor.test.ts` — ≥15 tests pass; `npm run typecheck` clean
   - Done when: `Doctor.check()` returns correct DoctorReport for all 5 check categories, all tests green, types exported
 
-- [ ] **T02: Wire doctor CLI command and add CLI test** `est:20m`
+- [x] **T02: Wire doctor CLI command and add CLI test** `est:20m`
   - Why: Exposes Doctor to users via `stupid doctor` command. Without CLI wiring, the core class is invisible.
   - Files: `packages/cli/src/commands/doctor.ts`, `packages/cli/src/cli.ts`, `packages/cli/src/__tests__/cli.test.ts`
   - Do: (1) Create `doctorCommand()` in `packages/cli/src/commands/doctor.ts` following `statusCommand` pattern — try `loadConfig()` for projectRoot with `process.cwd()` fallback, instantiate `Doctor(projectRoot)`, call `check()`, print each check with ✅/⚠️/❌ icons via chalk, exit code 1 if any check has status "fail". (2) Register in `cli.ts`: import `doctorCommand`, add `program.command("doctor").description("Check .stupid/ directory health").action(...)`. (3) Add `doctor --help` test to `cli.test.ts`. (4) Update the existing `--help lists all N commands` test to include "doctor" and bump the command count.

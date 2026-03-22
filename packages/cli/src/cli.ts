@@ -5,6 +5,7 @@ import { statusCommand } from "./commands/status.js";
 import { recallCommand } from "./commands/recall.js";
 import { initCommand } from "./commands/init.js";
 import { costCommand } from "./commands/cost.js";
+import { doctorCommand } from "./commands/doctor.js";
 
 const program = new Command();
 
@@ -69,6 +70,14 @@ program
   .option("--date <date>", "Filter by date (YYYY-MM-DD)")
   .action(async (opts) => {
     await costCommand(opts);
+  });
+
+// `stupid doctor` — check .stupid/ directory health
+program
+  .command("doctor")
+  .description("Check .stupid/ directory health")
+  .action(async () => {
+    await doctorCommand();
   });
 
 program.parse(process.argv);
