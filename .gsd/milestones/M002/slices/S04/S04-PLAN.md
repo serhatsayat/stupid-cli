@@ -61,7 +61,7 @@
   - Verify: `cd packages/core && npx vitest run src/__tests__/worktree-manager.test.ts` — all tests pass
   - Done when: All 3 modes have mocked unit tests for create, commit, merge, teardown, getMode, getWorkingDirectory
 
-- [ ] **T03: Add integration tests with real temp git repos** `est:45m`
+- [x] **T03: Add integration tests with real temp git repos** `est:45m`
   - Why: Mocked tests verify command sequences but miss real git behavior (merge conflicts, worktree directory creation, actual branch states). Integration tests with real repos prove the full lifecycle works.
   - Files: `packages/core/src/__tests__/worktree-manager-integration.test.ts`
   - Do: Create integration test file. For each mode, create a temp git repo (mkdtemp + git init + initial commit), run full lifecycle (create → commit → merge → teardown), and verify git state after each step. Verify squash merge produces single commit. Verify worktree directory exists/removed. Verify branch created/deleted. Verify `feat(SLICE/TASK): summary` format in git log. Clean up temp dirs in afterEach.
