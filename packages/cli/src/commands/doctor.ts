@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { loadConfig, Doctor } from "@stupid/core";
+import { loadConfig, Doctor } from "@serhatsayat/stupid-core";
 
 /**
  * CLI command: `stupid doctor`

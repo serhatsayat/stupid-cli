@@ -2,7 +2,7 @@ import { mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import chalk from "chalk";
 import { stringify } from "yaml";
-import { DEFAULT_CONFIG } from "@stupid/core";
+import { DEFAULT_CONFIG } from "@serhatsayat/stupid-core";
 
 /**
  * Setup command: `stupid init`

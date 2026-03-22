@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { loadConfig, StateMachine } from "@stupid/core";
+import { loadConfig, StateMachine } from "@serhatsayat/stupid-core";
 
 /**
  * Read-only command: `stupid status`

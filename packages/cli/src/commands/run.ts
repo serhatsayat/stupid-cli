@@ -7,8 +7,8 @@ import {
   ActivityLogger,
   DecisionExtractor,
   ProjectMemory,
-} from "@stupid/core";
-import type { StupidConfig, PlanSpec } from "@stupid/core";
+} from "@serhatsayat/stupid-core";
+import type { StupidConfig, PlanSpec } from "@serhatsayat/stupid-core";
 import { buildContext } from "../context.js";
 
 /**

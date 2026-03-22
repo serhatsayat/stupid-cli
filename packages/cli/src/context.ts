@@ -9,15 +9,15 @@ import {
   WorktreeManager,
   ComplexityClassifier,
   RoutingHistory,
-} from "@stupid/core";
-import type { StupidConfig, OrchestratorContext } from "@stupid/core";
+} from "@serhatsayat/stupid-core";
+import type { StupidConfig, OrchestratorContext } from "@serhatsayat/stupid-core";
 import { join } from "node:path";
 
 /**
  * Composition root: instantiates all governance modules and returns
  * the fully-wired OrchestratorContext dependency bag.
  *
- * Every @stupid/core module from S03–S06 is assembled here.
+ * Every @serhatsayat/stupid-core module from S03–S06 is assembled here.
  *
  * Wired requirements:
  * - R007: CostTracker + BudgetEnforcer for cost tracking / budget enforcement

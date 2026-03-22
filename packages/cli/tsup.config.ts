@@ -20,7 +20,7 @@ export default defineConfig({
     "yaml",
     "better-sqlite3",
     "zod",
-    "@stupid/core",
+    "@serhatsayat/stupid-core",
     "@mariozechner/pi-coding-agent",
     "@mariozechner/pi-ai",
     "@mariozechner/pi-tui",

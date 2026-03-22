@@ -6,7 +6,7 @@ import {
   CrashRecovery,
   StateMachine,
   ActivityLogger,
-} from "@stupid/core";
+} from "@serhatsayat/stupid-core";
 import { buildContext } from "../context.js";
 
 /**

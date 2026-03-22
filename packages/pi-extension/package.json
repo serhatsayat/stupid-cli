@@ -1,5 +1,5 @@
 {
-  "name": "@stupid/pi-extension",
+  "name": "@serhatsayat/stupid-pi-extension",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@stupid/core": "*"
+    "@serhatsayat/stupid-core": "*"
   },
   "devDependencies": {
     "vitest": "^3.0.0",

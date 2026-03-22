@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { loadConfig, ProjectMemory } from "@stupid/core";
+import { loadConfig, ProjectMemory } from "@serhatsayat/stupid-core";
 
 /**
  * Memory search command: `stupid recall "query"`

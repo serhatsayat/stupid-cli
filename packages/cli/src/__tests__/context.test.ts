@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildContext } from "../context.js";
-import { DEFAULT_CONFIG } from "@stupid/core";
-import type { StupidConfig, OrchestratorContext } from "@stupid/core";
+import { DEFAULT_CONFIG } from "@serhatsayat/stupid-core";
+import type { StupidConfig, OrchestratorContext } from "@serhatsayat/stupid-core";
 
 describe("buildContext — composition root", () => {
   let tempDir: string;

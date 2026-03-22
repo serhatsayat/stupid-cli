@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { loadConfig, ActivityLogger } from "@stupid/core";
+import { loadConfig, ActivityLogger } from "@serhatsayat/stupid-core";
 
 /**
  * Cost report command: `stupid cost`

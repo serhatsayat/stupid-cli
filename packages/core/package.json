@@ -1,9 +1,17 @@
 {
-  "name": "@stupid/core",
+  "name": "@serhatsayat/stupid-core",
   "version": "0.1.0",
+  "description": "Core engine for the stupid autonomous coding orchestrator",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/serhatsayat/stupid-cli.git",
+    "directory": "packages/core"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm --dts",
     "dev": "tsup src/index.ts --format esm --dts --watch",
