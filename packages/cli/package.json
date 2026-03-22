@@ -32,7 +32,8 @@
     "update-notifier": "^7.3.0",
     "@mariozechner/pi-coding-agent": "latest",
     "@mariozechner/pi-ai": "latest",
-    "@mariozechner/pi-tui": "latest"
+    "@mariozechner/pi-tui": "latest",
+    "@clack/prompts": "^0.9.0"
   },
   "devDependencies": {
     "vitest": "^3.0.0",

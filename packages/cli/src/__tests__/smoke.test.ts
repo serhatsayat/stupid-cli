@@ -7,9 +7,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = resolve(__dirname, "../../dist/cli.js");
 
 describe("stupid CLI — smoke", () => {
-  it("--help output includes all 6 command names", () => {
+  it("--help output includes all 8 command names", () => {
     const output = execSync(`node ${cliPath} --help`, { encoding: "utf-8" });
-    for (const cmd of ["auto", "status", "recall", "init", "cost"]) {
+    for (const cmd of ["auto", "status", "recall", "init", "cost", "doctor", "sessions"]) {
       expect(output).toContain(cmd);
     }
     // "run" is the default command — verified by the "task" argument presence

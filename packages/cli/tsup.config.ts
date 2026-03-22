@@ -25,5 +25,6 @@ export default defineConfig({
     "@mariozechner/pi-ai",
     "@mariozechner/pi-tui",
     "@mariozechner/pi-agent-core",
+    "@clack/prompts",
   ],
 });

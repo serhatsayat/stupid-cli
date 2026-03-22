@@ -81,3 +81,44 @@ describe("CLI argument parsing", () => {
     expect(output).toContain("--date");
   });
 });
+
+/**
+ * Interactive mode CLI flags — added in S02.
+ *
+ * Verifies --continue/-c flag and sessions subcommand are visible
+ * in help output after cli.ts was modified for interactive TUI mode.
+ */
+describe("Interactive mode CLI flags (S02)", () => {
+  it("--help contains --continue flag", () => {
+    const output = execSync(`node ${cliPath} --help`, { encoding: "utf-8" });
+    expect(output).toContain("--continue");
+  });
+
+  it("--help contains -c short flag", () => {
+    const output = execSync(`node ${cliPath} --help`, { encoding: "utf-8" });
+    expect(output).toContain("-c");
+  });
+
+  it("--help lists sessions subcommand", () => {
+    const output = execSync(`node ${cliPath} --help`, { encoding: "utf-8" });
+    expect(output).toContain("sessions");
+  });
+
+  it("sessions --help shows session-related description", () => {
+    const output = execSync(`node ${cliPath} sessions --help`, { encoding: "utf-8" });
+    expect(output.toLowerCase()).toContain("session");
+  });
+
+  it("sessions subcommand is listed among all commands", () => {
+    const output = execSync(`node ${cliPath} --help`, { encoding: "utf-8" });
+    // All original commands plus sessions
+    for (const cmd of ["auto", "status", "recall", "init", "cost", "doctor", "sessions"]) {
+      expect(output).toContain(cmd);
+    }
+  });
+
+  it("non-TTY invocation shows help text (TTY guard)", () => {
+    const output = execSync(`echo '' | node ${cliPath}`, { encoding: "utf-8" });
+    expect(output).toContain("stupid");
+  });
+});

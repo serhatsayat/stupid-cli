@@ -20,9 +20,29 @@ program
   .option("--dry-run", "Generate plan without executing", false)
   .option("--profile <profile>", "Token profile (budget|balanced|quality)")
   .option("--verbose", "Enable verbose output")
+  .option("-c, --continue", "Continue most recent session")
   .action(async (task: string | undefined, opts) => {
     if (!task) {
-      program.help();
+      // Check if onboarding needed (dynamic import to keep `stupid "task"` fast)
+      const { shouldRunOnboarding } = await import("./auth.js");
+      if (shouldRunOnboarding() && process.stdin.isTTY) {
+        const { runOnboardingWizard } = await import("./onboarding.js");
+        await runOnboardingWizard();
+        return;
+      }
+
+      // TTY guard: non-interactive environments get help text
+      if (!process.stdin.isTTY) {
+        program.help();
+        return;
+      }
+
+      // Launch interactive TUI mode
+      const { launchInteractiveMode } = await import("./interactive.js");
+      await launchInteractiveMode({
+        continue: opts.continue,
+        verbose: opts.verbose,
+      });
       return;
     }
     await runCommand(task, opts);
@@ -78,6 +98,15 @@ program
   .description("Check .stupid/ directory health")
   .action(async () => {
     await doctorCommand();
+  });
+
+// `stupid sessions` — list past interactive sessions
+program
+  .command("sessions")
+  .description("List past interactive sessions")
+  .action(async () => {
+    const { sessionsCommand } = await import("./commands/sessions.js");
+    await sessionsCommand();
   });
 
 program.parse(process.argv);

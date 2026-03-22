@@ -103,14 +103,15 @@ function buildTestContext(
 
 // ─── Integration Tests ──────────────────────────────────────
 //
-// Gated on ANTHROPIC_API_KEY: the entire suite is skipped when the
-// environment variable is not set. This prevents CI failures in
-// environments without API credentials.
+// Gated on ANTHROPIC_API_KEY or ANTHROPIC_OAUTH_TOKEN: the entire
+// suite is skipped when neither environment variable is set. This
+// prevents CI failures in environments without API credentials.
 //
-// Security: ANTHROPIC_API_KEY is never logged, echoed, or included
-// in assertion messages. Only its existence is checked for the gate.
+// Security: ANTHROPIC_API_KEY and ANTHROPIC_OAUTH_TOKEN are never
+// logged, echoed, or included in assertion messages. Only their
+// existence is checked for the gate.
 
-describe.skipIf(!process.env.ANTHROPIC_API_KEY)(
+describe.skipIf(!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_OAUTH_TOKEN)(
   "End-to-end integration (real Anthropic API)",
   () => {
     const tempDirs: string[] = [];
