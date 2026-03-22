@@ -117,3 +117,10 @@ Establishes the type foundation and delivers the complexity classifier. Adds `Co
 - `packages/core/src/orchestrator/interfaces.ts` — modified with IComplexityClassifier, IRoutingHistory, extended OrchestratorContext
 - `packages/core/src/orchestrator/complexity-classifier.ts` — new file, ComplexityClassifier class
 - `packages/core/src/__tests__/complexity-classifier.test.ts` — new file, 10+ passing tests
+
+## Observability Impact
+
+- **New signals:** `ComplexityClassifier.classify()` returns a `ComplexityTier` that downstream consumers (TaskRouter in T03) will use for model routing decisions. The tier value is inspectable at the call site.
+- **Inspection:** Future agents can instantiate `ComplexityClassifier` and call `classify()` on any task description to debug classification outcomes. The scoring is deterministic — same input always yields same tier.
+- **Failure visibility:** `RoutingRecord.errorType` field (type-only in this task) captures `ProviderErrorType` on failures, enabling post-hoc analysis once `RoutingHistory` (T02) persists records.
+- **No runtime persistence yet:** The classifier is stateless and produces no logs or DB writes. Persistence comes via `RoutingHistory` in T02.

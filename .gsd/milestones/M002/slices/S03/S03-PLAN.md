@@ -44,7 +44,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add types, interfaces, and ComplexityClassifier with tests** `est:45m`
+- [x] **T01: Add types, interfaces, and ComplexityClassifier with tests** `est:45m`
   - Why: Establishes the type foundation (ComplexityTier, RoutingRecord, interfaces) that T02 and T03 depend on, and delivers the complexity classifier — the core heuristic that R031 requires. Combining types+classifier avoids a types-only task that produces no testable output.
   - Files: `packages/core/src/types/index.ts`, `packages/core/src/orchestrator/interfaces.ts`, `packages/core/src/orchestrator/complexity-classifier.ts`, `packages/core/src/__tests__/complexity-classifier.test.ts`
   - Do: Add `ComplexityTier` type and `RoutingRecord` type to types/index.ts. Add `IComplexityClassifier` and `IRoutingHistory` interfaces to interfaces.ts. Extend `OrchestratorContext` with two optional fields. Create `complexity-classifier.ts` with signal-based scoring: light signals (short desc <50 words, single-file keywords like "rename", "fix typo"), heavy signals (long desc >150 words, multi-file keywords like "refactor", "redesign", architecture keywords), standard = default. Write comprehensive tests covering light/standard/heavy classification, edge cases (empty string, very long text), and TaskSpec-based input.

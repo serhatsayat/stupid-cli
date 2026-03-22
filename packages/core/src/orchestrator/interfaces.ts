@@ -7,6 +7,8 @@ import type {
   TaskSpec,
   StupidConfig,
   PlanSpec,
+  ComplexityTier,
+  RoutingRecord,
 } from "../types/index.js";
 
 // ─── Forward-Dependency Interfaces ───────────────────────────
@@ -86,6 +88,28 @@ export interface IFileSelector {
 }
 
 /**
+ * Classifies task complexity into light/standard/heavy tiers
+ * using signal-based heuristic scoring.
+ * Concrete implementation: S03 (ComplexityClassifier).
+ */
+export interface IComplexityClassifier {
+  classify(task: string | TaskSpec): ComplexityTier;
+}
+
+/**
+ * Records routing outcomes in SQLite for adaptive model selection.
+ * All methods are synchronous (better-sqlite3 is sync, and
+ * selectModel() in TaskRouter must remain sync for backward compat).
+ * Concrete implementation: S03 (RoutingHistory).
+ */
+export interface IRoutingHistory {
+  record(entry: Omit<RoutingRecord, "id">): void;
+  getBestModel(phase: string, tier: ComplexityTier): string | null;
+  getStats(): { total: number; byPhase: Record<string, number> };
+  close(): void;
+}
+
+/**
  * Orchestrator dependency bag — all optional so the Orchestrator
  * can run standalone (tests, budget-profile runs) or fully wired.
  */
@@ -98,4 +122,6 @@ export interface OrchestratorContext {
   stateMachine?: IStateMachine;
   sliceRunner?: ISliceRunner;
   fileSelector?: IFileSelector;
+  complexityClassifier?: IComplexityClassifier;
+  routingHistory?: IRoutingHistory;
 }

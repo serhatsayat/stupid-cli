@@ -224,3 +224,20 @@ export interface RetryConfig {
   maxDelayMs: number;
   jitterFactor: number;
 }
+
+// ─── Routing Types ───────────────────────────────────────────
+
+export type ComplexityTier = "light" | "standard" | "heavy";
+
+export interface RoutingRecord {
+  id?: number;
+  phase: string; // AgentRole value
+  complexityTier: ComplexityTier;
+  model: string; // short name: 'haiku', 'sonnet', 'opus'
+  success: boolean;
+  tokensUsed: number;
+  costUsd: number;
+  durationMs: number;
+  errorType?: ProviderErrorType;
+  timestamp: string;
+}
