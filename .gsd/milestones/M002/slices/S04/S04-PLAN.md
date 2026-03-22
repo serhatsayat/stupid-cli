@@ -47,7 +47,7 @@
 
 ## Tasks
 
-- [ ] **T01: Add WorktreeMode type, config schema field, and IWorktreeManager interface** `est:30m`
+- [x] **T01: Add WorktreeMode type, config schema field, and IWorktreeManager interface** `est:30m`
   - Why: Foundation types and contracts must exist before the implementation. All subsequent tasks depend on `WorktreeMode`, `IWorktreeManager`, and the config schema.
   - Files: `packages/core/src/types/index.ts`, `packages/core/src/config/config.ts`, `packages/core/src/orchestrator/interfaces.ts`
   - Do: Add `WorktreeMode` union type to types. Add `worktreeMode: WorktreeMode` to `StupidConfig.git` interface and Zod schema with `"branch"` default. Add `IWorktreeManager` interface with 6 methods to interfaces.ts. Add `worktreeManager?: IWorktreeManager` to `OrchestratorContext`. Keep `branchPerSlice` for backward compat.

@@ -71,6 +71,10 @@ export interface SubAgentSpawnOptions {
 
 export type TokenProfile = "budget" | "balanced" | "quality";
 
+// ─── Git Isolation Types ─────────────────────────────────────
+
+export type WorktreeMode = "worktree" | "branch" | "none";
+
 // ─── Configuration ───────────────────────────────────────────
 
 export interface StupidConfig {
@@ -96,6 +100,7 @@ export interface StupidConfig {
     commitPerTask: boolean;
     branchPerSlice: boolean;
     autoCommitMessage: boolean;
+    worktreeMode: WorktreeMode;
   };
   profile: TokenProfile;
   projectRoot: string;

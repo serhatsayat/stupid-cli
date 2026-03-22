@@ -71,6 +71,13 @@ The existing `branchPerSlice` boolean stays for backward compat — `worktreeMod
 - `packages/core/src/config/config.ts` — existing config with Zod schema + `DEFAULT_CONFIG`, add `worktreeMode`
 - `packages/core/src/orchestrator/interfaces.ts` — existing interfaces file with `OrchestratorContext`, add `IWorktreeManager`
 
+## Observability Impact
+
+- **Signals changed:** `StupidConfig.git.worktreeMode` is now part of the validated config — any config dump or diagnostic that logs the `git` block will surface the new field.
+- **Inspection:** `DEFAULT_CONFIG.git.worktreeMode` defaults to `"branch"` — agents can verify the active mode by reading the resolved config object.
+- **Failure visibility:** Zod validation rejects unknown `worktreeMode` values at config load time with a descriptive `ZodError` (invalid enum value).
+- **Type contracts:** `IWorktreeManager` in `interfaces.ts` defines the 6-method contract — downstream implementations must satisfy all signatures or TypeScript will report missing members.
+
 ## Expected Output
 
 - `packages/core/src/types/index.ts` — now exports `WorktreeMode` type and has `worktreeMode` in `StupidConfig.git`

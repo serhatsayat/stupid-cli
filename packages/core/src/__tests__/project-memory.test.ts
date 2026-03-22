@@ -31,6 +31,7 @@ function makeConfig(projectRoot: string): StupidConfig {
       commitPerTask: false,
       branchPerSlice: false,
       autoCommitMessage: false,
+      worktreeMode: "branch",
     },
     profile: "balanced",
     verbose: false,

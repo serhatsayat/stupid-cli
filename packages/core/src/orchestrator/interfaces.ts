@@ -9,6 +9,7 @@ import type {
   PlanSpec,
   ComplexityTier,
   RoutingRecord,
+  WorktreeMode,
 } from "../types/index.js";
 
 // ─── Forward-Dependency Interfaces ───────────────────────────
@@ -107,6 +108,19 @@ export interface IRoutingHistory {
   getBestModel(phase: string, tier: ComplexityTier): string | null;
   getStats(): { total: number; byPhase: Record<string, number> };
   close(): void;
+}
+
+/**
+ * Manages per-slice git isolation (worktree, branch, or none).
+ * Concrete implementation: S04 (WorktreeManager).
+ */
+export interface IWorktreeManager {
+  create(sliceId: string, title: string): void;
+  commit(sliceId: string, taskId: string, message: string, files?: string[]): void;
+  merge(sliceId: string): void;
+  teardown(sliceId: string): void;
+  getMode(): WorktreeMode;
+  getWorkingDirectory(sliceId: string): string;
 }
 
 /**
