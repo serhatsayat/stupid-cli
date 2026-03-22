@@ -11,7 +11,7 @@ import type {
 
 // ─── Forward-Dependency Interfaces ───────────────────────────
 //
-// These interfaces define contracts for modules in S04, S05, S06.
+// These interfaces define contracts for modules in S02–S06.
 // The Orchestrator accepts them via dependency injection so it
 // can be tested and used before the concrete implementations exist.
 
@@ -73,6 +73,19 @@ export interface IStateMachine {
 }
 
 /**
+ * Selects project files relevant to a given task description.
+ * Used by Orchestrator and SliceRunner to populate agent context.
+ * Concrete implementation: S02 (FileSelector).
+ */
+export interface IFileSelector {
+  selectFiles(
+    taskOrDescription: string | TaskSpec,
+    projectRoot: string,
+    maxFiles?: number,
+  ): Promise<string[]>;
+}
+
+/**
  * Orchestrator dependency bag — all optional so the Orchestrator
  * can run standalone (tests, budget-profile runs) or fully wired.
  */
@@ -84,4 +97,5 @@ export interface OrchestratorContext {
   memory?: IProjectMemory;
   stateMachine?: IStateMachine;
   sliceRunner?: ISliceRunner;
+  fileSelector?: IFileSelector;
 }

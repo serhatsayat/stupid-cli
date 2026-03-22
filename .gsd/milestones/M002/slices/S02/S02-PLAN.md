@@ -35,7 +35,7 @@
 
 ## Tasks
 
-- [ ] **T01: Build FileSelector core module with IFileSelector interface and unit tests** `est:1h`
+- [x] **T01: Build FileSelector core module with IFileSelector interface and unit tests** `est:1h`
   - Why: The core file selection algorithm is the primary deliverable — keyword extraction, project walking, scoring, ranking. Building it with tests first proves correctness before wiring.
   - Files: `packages/core/src/context/file-selector.ts`, `packages/core/src/orchestrator/interfaces.ts`, `packages/core/src/__tests__/file-selector.test.ts`
   - Do: Create `FileSelector` class with `extractKeywords()`, `walkProject()`, `scoreFile()`, `selectFiles()`. Add `IFileSelector` interface and `fileSelector?: IFileSelector` to `OrchestratorContext`. Write comprehensive vitest unit tests using temp directory fixtures with known file content. Cover: keyword extraction (stop word removal, dedup), file walking (exclusion patterns, extension filtering), scoring (path match bonus, content match, extension bonus), ranking (sorted, capped at maxFiles), edge cases (empty keywords → fallback to recent files, no matches, large file lists).
@@ -58,3 +58,10 @@
 - `packages/core/src/workflow/slice-runner.ts` (modify — wire file selection in executeTask)
 - `packages/cli/src/context.ts` (modify — instantiate FileSelector)
 - `packages/core/src/index.ts` (modify — export FileSelector + IFileSelector)
+
+## Observability / Diagnostics
+
+- **Runtime signals:** `FileSelector.selectFiles()` returns `Promise<string[]>` — empty array signals no matches; consumers should log when result is empty vs. populated. Future: add structured logging of keyword count, walk count, scored count, and fallback trigger.
+- **Inspection surfaces:** Static methods (`extractKeywords`, `walkProject`, `scoreFile`) are individually testable and inspectable — callers can verify intermediate outputs. The `IFileSelector` interface enables mock injection for deterministic testing.
+- **Failure visibility:** Missing or unreadable project directories produce an empty result (no throw). `walkProject()` silently skips unreadable entries. `scoreFile()` skips unreadable files but still includes them in the candidate pool. Falls back to recently-modified files when keyword scoring yields <3 results — this fallback path is observable via test assertions.
+- **Redaction:** No secrets or PII handled. File paths are project-relative. File content is read only for scoring (first 10KB) and never persisted or returned.

@@ -83,3 +83,9 @@ The interface accepts both `string` and `TaskSpec` (extract `.description` from 
 - `packages/core/src/context/file-selector.ts` — new FileSelector class with full algorithm
 - `packages/core/src/__tests__/file-selector.test.ts` — comprehensive unit tests with fixture-based assertions
 - `packages/core/src/orchestrator/interfaces.ts` — modified with `IFileSelector` interface and `OrchestratorContext.fileSelector` field
+
+## Observability Impact
+
+- **New signals:** `FileSelector` static methods (`extractKeywords`, `walkProject`, `scoreFile`) are individually callable and testable — a future agent can verify each pipeline stage in isolation. `selectFiles()` returns relative paths; empty array = no matches.
+- **Inspection:** Future agents can call `FileSelector.extractKeywords(text)` to verify keyword extraction, or `FileSelector.walkProject(root)` to inspect which files are visible in a project. The `IFileSelector` interface enables mock injection.
+- **Failure visibility:** Unreadable directories and files are silently skipped (no throws). The fallback to recently-modified files triggers when keyword matching yields <3 results — test assertions verify this path. Empty project root → empty result (no error).
