@@ -102,6 +102,13 @@ Creates the SQLite-backed routing history module that records which model was us
 - `packages/core/src/orchestrator/interfaces.ts` — implements `IRoutingHistory` interface (added in T01)
 - `packages/core/src/memory/project-memory.ts` — reference for better-sqlite3 + WAL + mkdirSync pattern
 
+## Observability Impact
+
+- **New persistence surface:** `.stupid/routing.db` is a standard SQLite file, inspectable with any SQLite client (e.g., `sqlite3 .stupid/routing.db "SELECT * FROM routing_history"`)
+- **Diagnostic method:** `RoutingHistory.getStats()` returns `{ total, byPhase }` — record counts for quick health checks without raw SQL
+- **Failure visibility:** `errorType` column captures `ProviderErrorType` values on failed routing outcomes, enabling post-hoc analysis of rate limits, overloads, auth errors, etc.
+- **Cold-start signal:** `getBestModel()` returns `null` when insufficient data exists (< 3 samples), clearly indicating the system hasn't learned yet for that phase+tier combination
+
 ## Expected Output
 
 - `packages/core/src/orchestrator/routing-history.ts` — new file, RoutingHistory class with sync SQLite storage

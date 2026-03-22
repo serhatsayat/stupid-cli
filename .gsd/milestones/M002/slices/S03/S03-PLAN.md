@@ -51,7 +51,7 @@
   - Verify: `cd packages/core && npx vitest run src/__tests__/complexity-classifier.test.ts` — all tests pass; `npx tsc --noEmit` clean
   - Done when: ComplexityClassifier correctly categorizes known light/heavy/standard tasks in 10+ test cases, types compile, interfaces defined
 
-- [ ] **T02: Implement RoutingHistory SQLite module with tests** `est:45m`
+- [x] **T02: Implement RoutingHistory SQLite module with tests** `est:45m`
   - Why: Delivers R032 — routing history with adaptive learning. Records which model was used per phase+tier, tracks success rates, and recommends the best model based on empirical data. The 3-sample cold-start protection prevents premature optimization.
   - Files: `packages/core/src/orchestrator/routing-history.ts`, `packages/core/src/__tests__/routing-history.test.ts`
   - Do: Create `routing-history.ts` implementing `IRoutingHistory`. Use `better-sqlite3` with WAL mode (same pattern as `ProjectMemory`). Schema: `routing_history` table with id, phase, complexityTier, model, success, tokensUsed, costUsd, durationMs, errorType, timestamp. Index on (phase, complexityTier). `getBestModel()`: query success rate per model for phase+tier, require ≥3 samples (cold start protection), return highest success rate model (break ties by lower cost), return null if insufficient data. `getStats()`: return record counts. `close()`: close DB. Write tests using temp directories (mkdtemp pattern from project-memory.test.ts). Test cases: record + retrieve, cold start returns null, multiple models compared, tie-breaking, close lifecycle, error type recording.
