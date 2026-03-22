@@ -41,7 +41,7 @@
 
 ## Tasks
 
-- [ ] **T01: Wire S01-S05 modules into composition root and harden BaseAgent for real API** `est:45m`
+- [x] **T01: Wire S01-S05 modules into composition root and harden BaseAgent for real API** `est:45m`
   - Why: All S01-S05 modules exist and are unit-tested but aren't connected in the composition root. Without wiring, the pipeline ignores retry logic, complexity routing, routing history, and memory records during real execution.
   - Files: `packages/cli/src/context.ts`, `packages/core/src/agents/base-agent.ts`, `packages/core/src/orchestrator/orchestrator.ts`, `packages/core/src/workflow/slice-runner.ts`
   - Do: (1) Add ComplexityClassifier + RoutingHistory to buildContext(). (2) Pass `{ classifier, history }` deps to TaskRouter in Orchestrator constructor and SliceRunner.run(). (3) Wire memory records from `context.memory` into agent spawn options in both Orchestrator.runAgent() and SliceRunner.executeTask(). (4) Wrap `session.prompt()` with RetryableSession in BaseAgent.execute(). (5) Harden `parseStructuredData()` regex to handle case-insensitive language tag and trailing whitespace. Constraint: RetryableSession.prompt() returns RetryResult — check success before proceeding; preserve event-based output capture.

@@ -72,3 +72,11 @@ This task fixes all five gaps with surgical edits (5-15 lines each), then confir
 - `packages/core/src/agents/base-agent.ts` — modified: imports RetryableSession, wraps session.prompt, checks RetryResult, hardened regex
 - `packages/core/src/orchestrator/orchestrator.ts` — modified: passes classifier+history to TaskRouter, wires memory records
 - `packages/core/src/workflow/slice-runner.ts` — modified: passes classifier+history to TaskRouter, wires memory records
+
+## Observability Impact
+
+- **RetryableSession wrapping**: BaseAgent now surfaces retry attempt count and classified error type in error messages when prompt fails after retries. The `onRetry` callback is available for external logging; callers see `RetryResult.attempts` and `RetryResult.error.errorType` in the structured result.
+- **RoutingHistory wiring**: `routing.db` in `.stupid/` is now created at context build time. Future agents can inspect `SELECT * FROM routing_history` for model selection decisions per phase+tier.
+- **ComplexityClassifier wiring**: TaskRouter now classifies task complexity when `SelectModelOptions` are passed. No new logs, but model selection decisions are observable via routing history records.
+- **Memory records injection**: Agent spawn options now include real project memory records instead of `[]`. Visible in compiled prompt templates via the `{memory}` placeholder.
+- **Failure state**: Non-retryable provider errors (auth, permission, context overflow) abort immediately with classified error type. Retryable errors (rate limit, overload, network) are retried up to 3 times with exponential backoff before propagating.

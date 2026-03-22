@@ -36,7 +36,10 @@ export class Orchestrator {
   constructor(config: StupidConfig, deps?: Partial<OrchestratorContext>) {
     this.config = config;
     this.deps = deps ?? {};
-    this.router = new TaskRouter(config);
+    this.router = new TaskRouter(config, {
+      classifier: this.deps.complexityClassifier,
+      history: this.deps.routingHistory,
+    });
   }
 
   /**
@@ -217,19 +220,26 @@ export class Orchestrator {
         this.config.projectRoot,
       )) ?? [];
 
+    // Build taskSpec first so we can query memory with it
+    const taskSpec = {
+      id: `phase-${role}`,
+      title: `${role} phase`,
+      description: contextDescription,
+      assignedRole: role,
+      dependencies: [] as string[],
+      files: selectedFiles,
+    };
+
+    // Retrieve relevant memory records (falls back to [] when not injected)
+    const memoryRecords =
+      (await this.deps.memory?.getRelevantRecords(taskSpec)) ?? [];
+
     const spawnOptions: SubAgentSpawnOptions = {
       agentRole: role,
       model: modelStr,
-      taskSpec: {
-        id: `phase-${role}`,
-        title: `${role} phase`,
-        description: contextDescription,
-        assignedRole: role,
-        dependencies: [],
-        files: selectedFiles,
-      },
+      taskSpec,
       contextFiles: selectedFiles,
-      memoryRecords: [],
+      memoryRecords,
       maxTokens: 8192,
       budgetUsd: this.config.budget.hardLimitUsd,
     };

@@ -7,8 +7,11 @@ import {
   SliceRunner,
   FileSelector,
   WorktreeManager,
+  ComplexityClassifier,
+  RoutingHistory,
 } from "@stupid/core";
 import type { StupidConfig, OrchestratorContext } from "@stupid/core";
+import { join } from "node:path";
 
 /**
  * Composition root: instantiates all governance modules and returns
@@ -21,6 +24,7 @@ import type { StupidConfig, OrchestratorContext } from "@stupid/core";
  * - R012: LoopDetector for loop/stagnation detection
  * - R003: SliceRunner enforces tester→implementer order internally
  * - R008: StateMachine persists session state for crash-proof resume
+ * - R033: ComplexityClassifier + RoutingHistory wired for adaptive model routing
  *
  * Note: ProjectMemory constructor creates `.stupid/MEMORY.db` — this is
  * acceptable since CLI commands that use context always need `.stupid/`.
@@ -37,6 +41,9 @@ export function buildContext(config: StupidConfig): OrchestratorContext {
     projectRoot: config.projectRoot,
     worktreeMode: config.git.worktreeMode,
   });
+  const stateDir = join(config.projectRoot, ".stupid");
+  const complexityClassifier = new ComplexityClassifier();
+  const routingHistory = new RoutingHistory(stateDir);
 
   return {
     config,
@@ -48,5 +55,7 @@ export function buildContext(config: StupidConfig): OrchestratorContext {
     sliceRunner,
     fileSelector,
     worktreeManager,
+    complexityClassifier,
+    routingHistory,
   };
 }

@@ -434,7 +434,7 @@ describe("BaseAgent", () => {
       const result = await agent.execute(makeSpawnOptions());
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Prompt execution failed");
+      expect(result.error).toContain("Prompt execution failed");
     });
 
     it("formats memory records into memory string", async () => {

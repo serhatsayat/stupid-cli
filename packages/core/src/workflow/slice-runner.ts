@@ -51,7 +51,10 @@ export class SliceRunner implements ISliceRunner {
    */
   async run(slice: SliceSpec, context: OrchestratorContext): Promise<SliceSpec> {
     const { config } = context;
-    const router = new TaskRouter(config);
+    const router = new TaskRouter(config, {
+      classifier: context.complexityClassifier,
+      history: context.routingHistory,
+    });
     const testRunner = new TestRunner();
     const prBuilder = new PRBuilder({ cwd: config.projectRoot });
     const wm = context.worktreeManager;
@@ -263,12 +266,16 @@ export class SliceRunner implements ISliceRunner {
         )) ?? [];
     }
 
+    // Retrieve relevant memory records (falls back to [] when not injected)
+    const memoryRecords =
+      (await context?.memory?.getRelevantRecords(task)) ?? [];
+
     return agent.execute({
       agentRole: task.assignedRole,
       model: `${modelSelection.provider}:${modelSelection.modelId}`,
       taskSpec: task,
       contextFiles,
-      memoryRecords: [],
+      memoryRecords,
       maxTokens: 8192,
       budgetUsd: config.budget.hardLimitUsd,
     });

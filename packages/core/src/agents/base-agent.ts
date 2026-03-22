@@ -19,6 +19,8 @@ import type {
   SubAgentSpawnOptions,
 } from "../types/index.js";
 import { compilePrompt } from "./prompt-loader.js";
+import { RetryableSession } from "../infrastructure/provider-retry.js";
+import type { RetryResult } from "../infrastructure/provider-retry.js";
 
 // ─── BaseAgent ───────────────────────────────────────────────
 
@@ -82,9 +84,15 @@ export abstract class BaseAgent {
         }
       });
 
-      // 6. Send the task prompt
+      // 6. Send the task prompt with retry wrapping for transient provider errors
       const taskInput = `Task: ${options.taskSpec.title}\n\n${options.taskSpec.description}`;
-      await session.prompt(taskInput);
+      const retryable = new RetryableSession(session);
+      const retryResult: RetryResult = await retryable.prompt(taskInput);
+
+      if (!retryResult.success) {
+        const errorMsg = retryResult.error?.originalMessage ?? "Unknown provider error";
+        throw new Error(`Provider error after ${retryResult.attempts} attempt(s): ${errorMsg}`);
+      }
 
       // Unsubscribe after prompt completes
       unsub();
@@ -137,7 +145,7 @@ export abstract class BaseAgent {
    * Subclasses may override for role-specific extraction.
    */
   protected parseStructuredData(content: string): unknown | undefined {
-    const match = content.match(/```json\n([\s\S]*?)\n```/);
+    const match = content.match(/```(?:json|JSON)\s*\n([\s\S]*?)\n\s*```/);
     if (!match?.[1]) return undefined;
 
     try {
