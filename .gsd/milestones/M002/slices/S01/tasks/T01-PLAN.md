@@ -78,3 +78,10 @@ The retry formula is: `delay = min(baseDelayMs × 2^attempt + randomJitter, maxD
 
 - `packages/core/src/types/index.ts` — extended with `ProviderErrorType`, `ProviderError`, `RetryConfig`
 - `packages/core/src/infrastructure/provider-retry.ts` — new file with `classifyError()`, `RetryableSession`, `DEFAULT_RETRY_CONFIG`
+
+## Observability Impact
+
+- **New signals:** `RetryableSession` accepts an `onRetry(attempt, error, delayMs)` callback — callers can observe every retry attempt, the classified error, and the calculated delay without coupling to a logging framework.
+- **Typed errors:** `ProviderError` objects carry `errorType`, `retryable`, `retryAfterMs`, and `originalMessage` — downstream consumers (S03 routing history, S06 integration) use these structured fields to record outcomes and make routing decisions.
+- **Inspection:** A future agent can verify this task by running `npx vitest run src/__tests__/provider-retry.test.ts` (33 tests) and confirming `classifyError()` returns the correct `ProviderErrorType` for any error message string.
+- **Failure visibility:** Non-retryable errors surface immediately as `{ success: false, error }` without silent retry loops. Retry exhaustion returns the final classified error with attempt count.

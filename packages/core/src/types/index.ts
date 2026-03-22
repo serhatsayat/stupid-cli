@@ -195,3 +195,32 @@ export interface SessionState {
   totalCostUsd: number;
   totalTokensUsed: number;
 }
+
+// ─── Provider Error Types ────────────────────────────────────
+
+export enum ProviderErrorType {
+  RateLimit = "rate_limit",
+  Overloaded = "overloaded",
+  ServerError = "server_error",
+  AuthError = "auth_error",
+  InvalidRequest = "invalid_request",
+  PermissionDenied = "permission_denied",
+  ContextOverflow = "context_overflow",
+  NetworkError = "network_error",
+  Timeout = "timeout",
+  Unknown = "unknown",
+}
+
+export interface ProviderError {
+  errorType: ProviderErrorType;
+  retryable: boolean;
+  retryAfterMs?: number;
+  originalMessage: string;
+}
+
+export interface RetryConfig {
+  maxRetries: number;
+  baseDelayMs: number;
+  maxDelayMs: number;
+  jitterFactor: number;
+}

@@ -38,7 +38,7 @@
 
 ## Tasks
 
-- [ ] **T01: Implement ProviderError types, classifyError, and RetryableSession** `est:45m`
+- [x] **T01: Implement ProviderError types, classifyError, and RetryableSession** `est:45m`
   - Why: Creates the core error classification and retry logic that R027 requires. Everything downstream (S03 routing history, S06 integration) depends on these types and this module existing.
   - Files: `packages/core/src/types/index.ts`, `packages/core/src/infrastructure/provider-retry.ts`
   - Do: Add `ProviderErrorType` enum and `ProviderError`/`RetryConfig` types to types/index.ts. Create provider-retry.ts with `classifyError()` (regex-based error message classification matching Anthropic error patterns) and `RetryableSession` class (wraps session.prompt() with exponential backoff, jitter, retry-after support, onRetry callback). Use `delay = min(baseDelay × 2^attempt + jitter, maxDelay)` formula. Default config: maxRetries=3, baseDelayMs=1000, maxDelayMs=60000, jitterFactor=0.1.
