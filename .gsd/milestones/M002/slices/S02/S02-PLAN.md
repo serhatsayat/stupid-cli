@@ -42,7 +42,7 @@
   - Verify: `cd packages/core && npx vitest run src/__tests__/file-selector.test.ts` passes, `npm run typecheck` clean
   - Done when: `FileSelector.selectFiles()` returns relevant ranked file paths for test fixtures, all unit tests pass, `IFileSelector` interface accepted by TypeScript
 
-- [ ] **T02: Wire FileSelector into Orchestrator, SliceRunner, CLI context, and public exports** `est:45m`
+- [x] **T02: Wire FileSelector into Orchestrator, SliceRunner, CLI context, and public exports** `est:45m`
   - Why: The FileSelector exists but nothing uses it yet. This task replaces every `contextFiles: []` with real file selection and wires the composition root.
   - Files: `packages/core/src/orchestrator/orchestrator.ts`, `packages/core/src/workflow/slice-runner.ts`, `packages/cli/src/context.ts`, `packages/core/src/index.ts`
   - Do: In `Orchestrator.runAgent()`, replace `contextFiles: []` with `this.deps.fileSelector?.selectFiles(taskSpec, projectRoot) ?? []`. In `SliceRunner`, pass `OrchestratorContext` to `executeTask()` (replacing bare `config`), use `context.fileSelector?.selectFiles(task.description, context.config.projectRoot) ?? task.files` for contextFiles. In `buildContext()`, instantiate `FileSelector` and add to returned context. Export `FileSelector` and `IFileSelector` from `packages/core/src/index.ts`. Ensure all changes are backward-compatible (optional field, fallback to `[]`).

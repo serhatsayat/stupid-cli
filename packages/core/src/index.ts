@@ -53,6 +53,9 @@ export { ImplementerAgent } from "./agents/implementer.js";
 export { ReviewerAgent } from "./agents/reviewer.js";
 export { FinalizerAgent } from "./agents/finalizer.js";
 
+// ─── Context ─────────────────────────────────────────────────
+export { FileSelector } from "./context/file-selector.js";
+
 // ─── Orchestrator ────────────────────────────────────────────
 export type {
   ICostTracker,
@@ -61,6 +64,7 @@ export type {
   ISliceRunner,
   IProjectMemory,
   IStateMachine,
+  IFileSelector,
   OrchestratorContext,
 } from "./orchestrator/interfaces.js";
 export { Orchestrator } from "./orchestrator/orchestrator.js";

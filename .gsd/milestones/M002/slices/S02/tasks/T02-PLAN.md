@@ -81,3 +81,10 @@ Key wiring points:
 - `packages/core/src/workflow/slice-runner.ts` — modified to use `fileSelector.selectFiles()` in `executeTask()` when `task.files` is empty
 - `packages/cli/src/context.ts` — modified to instantiate and inject `FileSelector`
 - `packages/core/src/index.ts` — modified to export `FileSelector` and `IFileSelector`
+
+## Observability Impact
+
+- **Orchestrator.runAgent()**: `contextFiles` and `taskSpec.files` now contain dynamically selected file paths instead of empty arrays. When `fileSelector` is not injected (tests, standalone use), falls back to `[]` — behavior unchanged. Agents receiving populated `contextFiles` produce more targeted output.
+- **SliceRunner.executeTask()**: When `task.files` is empty and `fileSelector` is available, dynamically resolves context files. When `task.files` is pre-populated (plan specified files), those are used unchanged. A future agent can inspect `spawnOptions.contextFiles` in agent logs to see which files were selected.
+- **CLI buildContext()**: `FileSelector` is always instantiated. No failure mode — constructor is a no-op. Its presence in context enables the Orchestrator and SliceRunner wiring above.
+- **Failure visibility**: If `fileSelector.selectFiles()` returns `[]`, agents get no file context — functionally identical to pre-wiring behavior. The optional chaining (`?.`) pattern ensures no runtime errors when `fileSelector` is absent.

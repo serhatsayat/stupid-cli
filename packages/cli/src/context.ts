@@ -5,6 +5,7 @@ import {
   StateMachine,
   ProjectMemory,
   SliceRunner,
+  FileSelector,
 } from "@stupid/core";
 import type { StupidConfig, OrchestratorContext } from "@stupid/core";
 
@@ -30,6 +31,7 @@ export function buildContext(config: StupidConfig): OrchestratorContext {
   const stateMachine = new StateMachine(config);
   const memory = new ProjectMemory(config);
   const sliceRunner = new SliceRunner();
+  const fileSelector = new FileSelector();
 
   return {
     config,
@@ -39,5 +41,6 @@ export function buildContext(config: StupidConfig): OrchestratorContext {
     stateMachine,
     memory,
     sliceRunner,
+    fileSelector,
   };
 }

@@ -210,6 +210,13 @@ export class Orchestrator {
   ): Promise<AgentResult> {
     const agent = AgentFactory.create(role, this.config);
 
+    // Select relevant project files via FileSelector (falls back to [] when not injected)
+    const selectedFiles =
+      (await this.deps.fileSelector?.selectFiles(
+        contextDescription,
+        this.config.projectRoot,
+      )) ?? [];
+
     const spawnOptions: SubAgentSpawnOptions = {
       agentRole: role,
       model: modelStr,
@@ -219,9 +226,9 @@ export class Orchestrator {
         description: contextDescription,
         assignedRole: role,
         dependencies: [],
-        files: [],
+        files: selectedFiles,
       },
-      contextFiles: [],
+      contextFiles: selectedFiles,
       memoryRecords: [],
       maxTokens: 8192,
       budgetUsd: this.config.budget.hardLimitUsd,

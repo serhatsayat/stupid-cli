@@ -73,6 +73,7 @@ export class SliceRunner implements ISliceRunner {
         task,
         router.selectModel(task.assignedRole),
         config,
+        context,
       );
       this.trackCost(context, task.assignedRole, result);
 
@@ -96,7 +97,7 @@ export class SliceRunner implements ISliceRunner {
             return { ...slice, status: "failed" };
           }
 
-          const result = await this.executeTask(task, implModelSelection, config);
+          const result = await this.executeTask(task, implModelSelection, config, context);
           this.trackCost(context, task.assignedRole, result);
 
           if (config.git.commitPerTask) {
@@ -131,6 +132,7 @@ export class SliceRunner implements ISliceRunner {
             task,
             router.selectModel(task.assignedRole),
             config,
+            context,
           );
           this.trackCost(context, task.assignedRole, result);
 
@@ -186,6 +188,7 @@ export class SliceRunner implements ISliceRunner {
         task,
         router.selectModel(task.assignedRole),
         config,
+        context,
       );
       this.trackCost(context, task.assignedRole, result);
 
@@ -201,19 +204,32 @@ export class SliceRunner implements ISliceRunner {
 
   /**
    * Create and execute an agent for a single task.
+   * When the task has no pre-specified files, uses FileSelector
+   * (if available in context) to find relevant project files.
    */
   private async executeTask(
     task: TaskSpec,
     modelSelection: ModelSelection,
     config: StupidConfig,
+    context?: OrchestratorContext,
   ): Promise<AgentResult> {
     const agent = AgentFactory.create(task.assignedRole, config);
+
+    // Use task.files if specified; otherwise select files dynamically
+    let contextFiles = task.files;
+    if ((!contextFiles || contextFiles.length === 0) && context?.fileSelector) {
+      contextFiles =
+        (await context.fileSelector.selectFiles(
+          task.description,
+          config.projectRoot,
+        )) ?? [];
+    }
 
     return agent.execute({
       agentRole: task.assignedRole,
       model: `${modelSelection.provider}:${modelSelection.modelId}`,
       taskSpec: task,
-      contextFiles: task.files,
+      contextFiles,
       memoryRecords: [],
       maxTokens: 8192,
       budgetUsd: config.budget.hardLimitUsd,
