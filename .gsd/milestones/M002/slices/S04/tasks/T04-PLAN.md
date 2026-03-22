@@ -76,3 +76,9 @@ Add barrel exports for `WorktreeManager`, `WorktreeMode`, and `IWorktreeManager`
 - `packages/core/src/workflow/slice-runner.ts` — uses `context.worktreeManager` with PRBuilder fallback
 - `packages/core/src/index.ts` — exports `WorktreeManager`, `WorktreeMode`, `IWorktreeManager`
 - `packages/cli/src/context.ts` — instantiates `WorktreeManager` from config
+
+## Observability Impact
+
+- **SliceRunner now logs merge/teardown failures** to `console.error` with `WorktreeManager merge failed for slice X:` and `WorktreeManager teardown failed for slice X:` messages. These are non-fatal — the slice result ("done"/"failed") is preserved even when cleanup fails.
+- **Failure path teardown:** Every early-return "failed" path in `SliceRunner.run()` calls `safeWorktreeTeardown()`, which catches and logs teardown errors rather than masking the original failure.
+- **Inspection:** `grep "worktreeManager" packages/cli/src/context.ts` confirms wiring. `grep "context.worktreeManager" packages/core/src/workflow/slice-runner.ts` confirms integration. The existing 14 SliceRunner tests verify the PRBuilder fallback still works when `worktreeManager` is absent from context.

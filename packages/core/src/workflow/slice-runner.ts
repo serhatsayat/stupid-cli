@@ -1,4 +1,4 @@
-import type { ISliceRunner, OrchestratorContext } from "../orchestrator/interfaces.js";
+import type { ISliceRunner, IWorktreeManager, OrchestratorContext } from "../orchestrator/interfaces.js";
 import { AgentFactory } from "../agents/agent-factory.js";
 import { TaskRouter } from "../orchestrator/task-router.js";
 import type { ModelSelection } from "../orchestrator/task-router.js";
@@ -54,6 +54,12 @@ export class SliceRunner implements ISliceRunner {
     const router = new TaskRouter(config);
     const testRunner = new TestRunner();
     const prBuilder = new PRBuilder({ cwd: config.projectRoot });
+    const wm = context.worktreeManager;
+
+    // ── WorktreeManager: create per-slice isolation ────────
+    if (wm) {
+      wm.create(slice.id, slice.title);
+    }
 
     // Group tasks by their assigned role
     const tasksByRole = this.groupByRole(slice.tasks);
@@ -62,10 +68,23 @@ export class SliceRunner implements ISliceRunner {
     let implModelSelection = router.selectModel(AgentRole.Implementer);
     let escalationAttempts = 0;
 
+    /**
+     * Commit helper: prefers WorktreeManager when available,
+     * falls back to PRBuilder for backward compat.
+     */
+    const commitTask = (sliceId: string, taskId: string, title: string): void => {
+      if (wm) {
+        wm.commit(sliceId, taskId, title);
+      } else if (config.git.commitPerTask) {
+        prBuilder.createCommit(sliceId, taskId, title);
+      }
+    };
+
     // ── Phase 1: Tester (R003 — runs before implementer) ───
     const testerTasks = tasksByRole.get(AgentRole.Tester) ?? [];
     for (const task of testerTasks) {
       if (this.shouldStopForBudget(context)) {
+        this.safeWorktreeTeardown(wm, slice.id);
         return { ...slice, status: "failed" };
       }
 
@@ -77,9 +96,7 @@ export class SliceRunner implements ISliceRunner {
       );
       this.trackCost(context, task.assignedRole, result);
 
-      if (config.git.commitPerTask) {
-        prBuilder.createCommit(slice.id, task.id, task.title);
-      }
+      commitTask(slice.id, task.id, task.title);
     }
 
     // ── Phases 2-4: Implementer → Verify → Reviewer ────────
@@ -94,15 +111,14 @@ export class SliceRunner implements ISliceRunner {
         // ── Implementer phase ──────────────────────────────
         for (const task of implTasks) {
           if (this.shouldStopForBudget(context)) {
+            this.safeWorktreeTeardown(wm, slice.id);
             return { ...slice, status: "failed" };
           }
 
           const result = await this.executeTask(task, implModelSelection, config, context);
           this.trackCost(context, task.assignedRole, result);
 
-          if (config.git.commitPerTask) {
-            prBuilder.createCommit(slice.id, task.id, task.title);
-          }
+          commitTask(slice.id, task.id, task.title);
         }
 
         // ── Verify phase — run tests after implementation ──
@@ -112,6 +128,7 @@ export class SliceRunner implements ISliceRunner {
             cwd: config.projectRoot,
           });
           if (!testResult.passed) {
+            this.safeWorktreeTeardown(wm, slice.id);
             return { ...slice, status: "failed" };
           }
         }
@@ -125,6 +142,7 @@ export class SliceRunner implements ISliceRunner {
         let rejected = false;
         for (const task of reviewerTasks) {
           if (this.shouldStopForBudget(context)) {
+            this.safeWorktreeTeardown(wm, slice.id);
             return { ...slice, status: "failed" };
           }
 
@@ -148,9 +166,7 @@ export class SliceRunner implements ISliceRunner {
             break;
           }
 
-          if (config.git.commitPerTask) {
-            prBuilder.createCommit(slice.id, task.id, task.title);
-          }
+          commitTask(slice.id, task.id, task.title);
         }
 
         if (!rejected) {
@@ -161,6 +177,7 @@ export class SliceRunner implements ISliceRunner {
         // ── Escalation (R004) ──────────────────────────────
         // Cap retries to prevent infinite loops
         if (escalationAttempts >= config.governance.maxRetries) {
+          this.safeWorktreeTeardown(wm, slice.id);
           return { ...slice, status: "failed" };
         }
 
@@ -169,6 +186,7 @@ export class SliceRunner implements ISliceRunner {
         );
         if (!escalation) {
           // At model ceiling — no further escalation possible
+          this.safeWorktreeTeardown(wm, slice.id);
           return { ...slice, status: "failed" };
         }
 
@@ -181,6 +199,7 @@ export class SliceRunner implements ISliceRunner {
     const finalizerTasks = tasksByRole.get(AgentRole.Finalizer) ?? [];
     for (const task of finalizerTasks) {
       if (this.shouldStopForBudget(context)) {
+        this.safeWorktreeTeardown(wm, slice.id);
         return { ...slice, status: "failed" };
       }
 
@@ -192,8 +211,27 @@ export class SliceRunner implements ISliceRunner {
       );
       this.trackCost(context, task.assignedRole, result);
 
-      if (config.git.commitPerTask) {
-        prBuilder.createCommit(slice.id, task.id, task.title);
+      commitTask(slice.id, task.id, task.title);
+    }
+
+    // ── WorktreeManager: merge + teardown on success ───────
+    if (wm) {
+      try {
+        wm.merge(slice.id);
+      } catch (err) {
+        // merge/teardown failures must not mask the actual slice result
+        console.error(
+          `WorktreeManager merge failed for slice ${slice.id}:`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+      try {
+        wm.teardown(slice.id);
+      } catch (err) {
+        console.error(
+          `WorktreeManager teardown failed for slice ${slice.id}:`,
+          err instanceof Error ? err.message : err,
+        );
       }
     }
 
@@ -267,5 +305,24 @@ export class SliceRunner implements ISliceRunner {
       map.set(task.assignedRole, group);
     }
     return map;
+  }
+
+  /**
+   * Safely teardown worktree on failure paths — errors are logged
+   * but never mask the actual slice failure.
+   */
+  private safeWorktreeTeardown(
+    wm: IWorktreeManager | undefined,
+    sliceId: string,
+  ): void {
+    if (!wm) return;
+    try {
+      wm.teardown(sliceId);
+    } catch (err) {
+      console.error(
+        `WorktreeManager teardown failed for slice ${sliceId}:`,
+        err instanceof Error ? err.message : err,
+      );
+    }
   }
 }

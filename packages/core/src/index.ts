@@ -25,6 +25,7 @@ export type {
   RetryConfig,
   ComplexityTier,
   RoutingRecord,
+  WorktreeMode,
 } from "./types/index.js";
 
 // ─── Config ──────────────────────────────────────────────────
@@ -69,6 +70,7 @@ export type {
   IFileSelector,
   IComplexityClassifier,
   IRoutingHistory,
+  IWorktreeManager,
   OrchestratorContext,
 } from "./orchestrator/interfaces.js";
 export { Orchestrator } from "./orchestrator/orchestrator.js";
@@ -103,6 +105,7 @@ export {
   DEFAULT_RETRY_CONFIG,
 } from "./infrastructure/provider-retry.js";
 export type { RetryResult } from "./infrastructure/provider-retry.js";
+export { WorktreeManager } from "./infrastructure/worktree-manager.js";
 
 // ─── Memory ─────────────────────────────────────────────────
 export { ProjectMemory } from "./memory/project-memory.js";

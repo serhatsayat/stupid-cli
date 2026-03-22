@@ -138,4 +138,5 @@ export interface OrchestratorContext {
   fileSelector?: IFileSelector;
   complexityClassifier?: IComplexityClassifier;
   routingHistory?: IRoutingHistory;
+  worktreeManager?: IWorktreeManager;
 }

@@ -6,6 +6,7 @@ import {
   ProjectMemory,
   SliceRunner,
   FileSelector,
+  WorktreeManager,
 } from "@stupid/core";
 import type { StupidConfig, OrchestratorContext } from "@stupid/core";
 
@@ -32,6 +33,10 @@ export function buildContext(config: StupidConfig): OrchestratorContext {
   const memory = new ProjectMemory(config);
   const sliceRunner = new SliceRunner();
   const fileSelector = new FileSelector();
+  const worktreeManager = new WorktreeManager({
+    projectRoot: config.projectRoot,
+    worktreeMode: config.git.worktreeMode,
+  });
 
   return {
     config,
@@ -42,5 +47,6 @@ export function buildContext(config: StupidConfig): OrchestratorContext {
     memory,
     sliceRunner,
     fileSelector,
+    worktreeManager,
   };
 }

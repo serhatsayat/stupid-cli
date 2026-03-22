@@ -68,7 +68,7 @@
   - Verify: `cd packages/core && npx vitest run src/__tests__/worktree-manager-integration.test.ts` — all tests pass
   - Done when: All 3 modes have passing integration tests proving real git lifecycle
 
-- [ ] **T04: Wire WorktreeManager into SliceRunner, exports, and CLI composition root** `est:45m`
+- [x] **T04: Wire WorktreeManager into SliceRunner, exports, and CLI composition root** `est:45m`
   - Why: The WorktreeManager must be connected to the execution pipeline. SliceRunner currently uses PRBuilder directly — it needs to prefer WorktreeManager when available while preserving backward compatibility for existing tests.
   - Files: `packages/core/src/workflow/slice-runner.ts`, `packages/core/src/index.ts`, `packages/cli/src/context.ts`
   - Do: Update `SliceRunner.run()` to check `context.worktreeManager` — if present, call `worktreeManager.create()` at slice start, `worktreeManager.commit()` per task, `worktreeManager.merge()` + `worktreeManager.teardown()` at end. Fall back to `PRBuilder` when `worktreeManager` is absent. Add `WorktreeManager`, `WorktreeMode`, `IWorktreeManager` to barrel exports in `index.ts`. Instantiate `WorktreeManager` in `context.ts` and add to `OrchestratorContext`. Run all existing tests to verify backward compat.
