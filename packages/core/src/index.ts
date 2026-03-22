@@ -23,6 +23,8 @@ export type {
   SessionState,
   ProviderError,
   RetryConfig,
+  ComplexityTier,
+  RoutingRecord,
 } from "./types/index.js";
 
 // ─── Config ──────────────────────────────────────────────────
@@ -65,12 +67,16 @@ export type {
   IProjectMemory,
   IStateMachine,
   IFileSelector,
+  IComplexityClassifier,
+  IRoutingHistory,
   OrchestratorContext,
 } from "./orchestrator/interfaces.js";
 export { Orchestrator } from "./orchestrator/orchestrator.js";
 export { TaskPlanner } from "./orchestrator/task-planner.js";
 export { TaskRouter, MODEL_ID_MAP } from "./orchestrator/task-router.js";
-export type { ModelSelection } from "./orchestrator/task-router.js";
+export type { ModelSelection, TaskRouterDeps, SelectModelOptions } from "./orchestrator/task-router.js";
+export { ComplexityClassifier } from "./orchestrator/complexity-classifier.js";
+export { RoutingHistory } from "./orchestrator/routing-history.js";
 export { ResultAggregator } from "./orchestrator/result-aggregator.js";
 export type { AggregatedResult } from "./orchestrator/result-aggregator.js";
 

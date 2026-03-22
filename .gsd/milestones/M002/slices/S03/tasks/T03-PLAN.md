@@ -158,3 +158,10 @@ Integrates ComplexityClassifier (T01) and RoutingHistory (T02) into TaskRouter, 
 - `packages/core/src/orchestrator/task-router.ts` — modified with optional deps, complexity-aware selectModel
 - `packages/core/src/__tests__/task-router.test.ts` — modified with 10+ new tests appended
 - `packages/core/src/index.ts` — modified with new exports for ComplexityClassifier, RoutingHistory, types, interfaces
+
+## Observability Impact
+
+- **New signal:** `selectModel(role, options)` with options produces a model selection influenced by complexity tier and routing history — the caller can compare with and without options to see the routing adjustment effect.
+- **Inspection:** Callers can inspect the returned `ModelSelection.modelId` to confirm complexity-based downgrades (light→haiku) or upgrades (heavy→opus). History-suggested models are capped by the profile ceiling, which is observable as a discrepancy between history suggestion and returned model.
+- **Failure visibility:** When no classifier is injected and no explicit tier is provided, the tier defaults to `"standard"` — this is a silent fallback. No error is surfaced; the behavior is identical to calling `selectModel(role)` without options.
+- **Dependency transparency:** `TaskRouterDeps` fields are optional. A router constructed without deps behaves identically to pre-enhancement behavior, making it safe to deploy incrementally.

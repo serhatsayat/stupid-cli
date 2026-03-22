@@ -200,3 +200,220 @@ describe("TaskRouter", () => {
     });
   });
 });
+
+// ─── Complexity-Aware Routing Tests ──────────────────────────
+
+import type {
+  IComplexityClassifier,
+  IRoutingHistory,
+} from "../orchestrator/interfaces.js";
+import type { ComplexityTier } from "../types/index.js";
+import type { SelectModelOptions } from "../orchestrator/task-router.js";
+
+function makeMockClassifier(tier: ComplexityTier): IComplexityClassifier {
+  return { classify: () => tier };
+}
+
+function makeMockHistory(
+  bestModel: string | null,
+): IRoutingHistory {
+  return {
+    getBestModel: () => bestModel,
+    record: () => {},
+    getStats: () => ({ total: 0, byPhase: {} }),
+    close: () => {},
+  };
+}
+
+describe("selectModel — complexity-aware routing", () => {
+  // ── Tier-based adjustments (no deps, explicit tier) ────────
+
+  it("downgrades light task from sonnet to haiku (balanced)", () => {
+    const router = new TaskRouter(DEFAULT_CONFIG);
+    const result = router.selectModel(AgentRole.Implementer, {
+      complexityTier: "light",
+    });
+    // implementation=sonnet, light→downgrade→haiku
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-haiku-3-5",
+    });
+  });
+
+  it("upgrades heavy task from haiku to sonnet (quality)", () => {
+    const router = new TaskRouter(configWithProfile("quality"));
+    const result = router.selectModel(AgentRole.Research, {
+      complexityTier: "heavy",
+    });
+    // research=haiku, heavy→upgrade→sonnet, quality ceiling allows it
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  it("heavy upgrade blocked by ceiling (balanced: sonnet ceiling)", () => {
+    const router = new TaskRouter(DEFAULT_CONFIG);
+    const result = router.selectModel(AgentRole.Implementer, {
+      complexityTier: "heavy",
+    });
+    // implementation=sonnet, heavy→upgrade→opus, but ceiling=sonnet → sonnet
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  it("standard tier produces no change", () => {
+    const router = new TaskRouter(DEFAULT_CONFIG);
+    const withOptions = router.selectModel(AgentRole.Implementer, {
+      complexityTier: "standard",
+    });
+    const without = router.selectModel(AgentRole.Implementer);
+    expect(withOptions).toEqual(without);
+  });
+
+  it("light can't go below haiku (already at lowest tier)", () => {
+    const router = new TaskRouter(configWithProfile("quality"));
+    const result = router.selectModel(AgentRole.Research, {
+      complexityTier: "light",
+    });
+    // research=haiku (index 0), light→downgrade but already at bottom → haiku
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-haiku-3-5",
+    });
+  });
+
+  // ── Classifier integration ─────────────────────────────────
+
+  it("uses classifier when taskDescription provided and no explicit tier", () => {
+    const classifier = makeMockClassifier("light");
+    const router = new TaskRouter(DEFAULT_CONFIG, { classifier });
+    const result = router.selectModel(AgentRole.Implementer, {
+      taskDescription: "rename a variable",
+    });
+    // classifier returns "light", implementation=sonnet → haiku
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-haiku-3-5",
+    });
+  });
+
+  it("explicit complexityTier overrides classifier", () => {
+    const classifier = makeMockClassifier("light");
+    const router = new TaskRouter(DEFAULT_CONFIG, { classifier });
+    const result = router.selectModel(AgentRole.Implementer, {
+      taskDescription: "anything",
+      complexityTier: "heavy",
+    });
+    // explicit heavy overrides classifier's "light"
+    // implementation=sonnet → upgrade→opus → capped to sonnet (balanced ceiling)
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  // ── No options = original behavior ─────────────────────────
+
+  it("no options arg with deps injected = identical to vanilla router", () => {
+    const classifier = makeMockClassifier("light");
+    const history = makeMockHistory("opus");
+    const enhanced = new TaskRouter(DEFAULT_CONFIG, { classifier, history });
+    const vanilla = new TaskRouter(DEFAULT_CONFIG);
+
+    // selectModel with no second arg must ignore deps
+    expect(enhanced.selectModel(AgentRole.Implementer)).toEqual(
+      vanilla.selectModel(AgentRole.Implementer),
+    );
+    expect(enhanced.selectModel(AgentRole.Research)).toEqual(
+      vanilla.selectModel(AgentRole.Research),
+    );
+    expect(enhanced.selectModel(AgentRole.Architect)).toEqual(
+      vanilla.selectModel(AgentRole.Architect),
+    );
+  });
+
+  // ── History-based routing ──────────────────────────────────
+
+  it("history override: uses history suggestion even if different from config", () => {
+    const history = makeMockHistory("haiku");
+    const router = new TaskRouter(configWithProfile("quality"), { history });
+    const result = router.selectModel(AgentRole.Implementer, {
+      complexityTier: "standard",
+    });
+    // history says "haiku" → use it (quality ceiling allows haiku)
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-haiku-3-5",
+    });
+  });
+
+  it("history suggestion capped by ceiling", () => {
+    const history = makeMockHistory("opus");
+    const router = new TaskRouter(DEFAULT_CONFIG, { history });
+    const result = router.selectModel(AgentRole.Implementer, {
+      complexityTier: "standard",
+    });
+    // history says "opus" but balanced ceiling=sonnet → sonnet
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  it("history null falls back to classifier-based adjustment", () => {
+    const classifier = makeMockClassifier("heavy");
+    const history = makeMockHistory(null);
+    const router = new TaskRouter(configWithProfile("quality"), {
+      classifier,
+      history,
+    });
+    const result = router.selectModel(AgentRole.Research, {
+      taskDescription: "complex multi-module refactor",
+    });
+    // history returns null → classifier says "heavy" → haiku upgrades to sonnet
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  it("no classifier and no explicit tier defaults to standard", () => {
+    const history = makeMockHistory(null);
+    const router = new TaskRouter(DEFAULT_CONFIG, { history });
+    const result = router.selectModel(AgentRole.Implementer, {
+      taskDescription: "do something",
+    });
+    // no classifier → tier defaults to "standard" → no adjustment → sonnet
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  it("heavy upgrade from haiku to sonnet, capped at sonnet (balanced)", () => {
+    const router = new TaskRouter(DEFAULT_CONFIG);
+    const result = router.selectModel(AgentRole.Research, {
+      complexityTier: "heavy",
+    });
+    // research=haiku → heavy upgrades to sonnet, balanced ceiling=sonnet → sonnet
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-sonnet-4-6",
+    });
+  });
+
+  it("heavy upgrade from sonnet to opus (quality profile allows it)", () => {
+    const router = new TaskRouter(configWithProfile("quality"));
+    const result = router.selectModel(AgentRole.Implementer, {
+      complexityTier: "heavy",
+    });
+    // implementation=sonnet → heavy upgrades to opus, quality ceiling=opus → opus
+    expect(result).toEqual({
+      provider: "anthropic",
+      modelId: "claude-opus-4-5",
+    });
+  });
+});

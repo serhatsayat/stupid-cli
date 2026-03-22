@@ -1,5 +1,6 @@
 import { AgentRole } from "../types/index.js";
-import type { StupidConfig } from "../types/index.js";
+import type { StupidConfig, ComplexityTier, TaskSpec } from "../types/index.js";
+import type { IComplexityClassifier, IRoutingHistory } from "./interfaces.js";
 import { TOKEN_PROFILES } from "../infrastructure/token-profiles.js";
 
 // ─── Model ID Mapping ────────────────────────────────────────
@@ -75,6 +76,17 @@ export interface ModelSelection {
   modelId: string;
 }
 
+export interface TaskRouterDeps {
+  classifier?: IComplexityClassifier;
+  history?: IRoutingHistory;
+}
+
+export interface SelectModelOptions {
+  taskDescription?: string;
+  taskSpec?: TaskSpec;
+  complexityTier?: ComplexityTier;
+}
+
 /**
  * Routes agent roles to models, enforcing token profile ceilings
  * and providing an escalation chain for retry-on-failure.
@@ -87,11 +99,15 @@ export class TaskRouter {
   private readonly config: StupidConfig;
   private readonly ceiling: string;
   private readonly ceilingIdx: number;
+  private readonly classifier?: IComplexityClassifier;
+  private readonly history?: IRoutingHistory;
 
-  constructor(config: StupidConfig) {
+  constructor(config: StupidConfig, deps?: TaskRouterDeps) {
     this.config = config;
     this.ceiling = TOKEN_PROFILES[config.profile].modelCeiling;
     this.ceilingIdx = tierIndex(this.ceiling);
+    this.classifier = deps?.classifier;
+    this.history = deps?.history;
   }
 
   /**
@@ -99,13 +115,49 @@ export class TaskRouter {
    * profile ceiling. If the configured model exceeds the ceiling,
    * it is downgraded to the ceiling model.
    *
+   * When `options` is provided, applies complexity-based routing:
+   * 1. Determines complexity tier (explicit, classified, or default "standard")
+   * 2. Checks routing history for empirically best model
+   * 3. Falls back to complexity-based adjustment (light→downgrade, heavy→upgrade)
+   *
    * @param role - The agent role to select a model for
+   * @param options - Optional complexity routing overrides
    * @returns Provider and Pi SDK model ID
    */
-  selectModel(role: AgentRole): ModelSelection {
+  selectModel(role: AgentRole, options?: SelectModelOptions): ModelSelection {
     const configKey = roleToConfigKey(role);
     const configuredModel = this.config.models[configKey];
-    const effectiveModel = this.applyModelCeiling(configuredModel);
+
+    // No options: original behavior (backward compatible)
+    if (!options) {
+      const effectiveModel = this.applyModelCeiling(configuredModel);
+      return {
+        provider: "anthropic",
+        modelId: MODEL_ID_MAP[effectiveModel] ?? effectiveModel,
+      };
+    }
+
+    // Determine complexity tier
+    const tier: ComplexityTier =
+      options.complexityTier ??
+      this.classifier?.classify(
+        options.taskDescription ?? options.taskSpec?.description ?? "",
+      ) ??
+      "standard";
+
+    // Check routing history for empirically best model
+    const historyModel = this.history?.getBestModel(role, tier) ?? null;
+    if (historyModel !== null) {
+      const capped = this.applyModelCeiling(historyModel);
+      return {
+        provider: "anthropic",
+        modelId: MODEL_ID_MAP[capped] ?? capped,
+      };
+    }
+
+    // Apply complexity adjustment
+    const adjusted = this.adjustModelForComplexity(configuredModel, tier);
+    const effectiveModel = this.applyModelCeiling(adjusted);
 
     return {
       provider: "anthropic",
@@ -145,6 +197,23 @@ export class TaskRouter {
       provider: "anthropic",
       modelId: MODEL_ID_MAP[nextModel],
     };
+  }
+
+  /**
+   * Adjusts a base model up or down based on complexity tier.
+   * - Light tasks downgrade one tier (sonnet→haiku). Won't go below haiku.
+   * - Heavy tasks upgrade one tier (sonnet→opus). Ceiling applied separately.
+   * - Standard tasks keep the base model.
+   */
+  private adjustModelForComplexity(baseModel: string, tier: ComplexityTier): string {
+    const baseIdx = tierIndex(baseModel);
+    if (tier === "light" && baseIdx > 0) {
+      return MODEL_TIERS[baseIdx - 1];
+    }
+    if (tier === "heavy" && baseIdx < MODEL_TIERS.length - 1) {
+      return MODEL_TIERS[baseIdx + 1];
+    }
+    return baseModel;
   }
 
   /**
