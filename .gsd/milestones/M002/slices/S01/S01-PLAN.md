@@ -45,7 +45,7 @@
   - Verify: `cd packages/core && npx tsc --noEmit` — no type errors
   - Done when: `provider-retry.ts` exports `classifyError` and `RetryableSession`, types compile cleanly, and error classification covers all 10 Anthropic error types
 
-- [ ] **T02: Add unit tests and wire exports** `est:45m`
+- [x] **T02: Add unit tests and wire exports** `est:45m`
   - Why: Proves R027 works — every error type classified correctly, retry logic honors backoff timing and ceiling, permanent errors abort immediately. Wires exports so downstream slices can import.
   - Files: `packages/core/src/__tests__/provider-retry.test.ts`, `packages/core/src/index.ts`
   - Do: Write vitest tests following the mock pattern from base-agent.test.ts (vi.mock Pi SDK, mock session.prompt to throw errors). Test all 10 error classifications, retry-on-transient, abort-on-permanent, backoff timing with fake timers, maxRetries ceiling, jitter bounds, retryAfterMs respect, onRetry callback invocation. Add exports to index.ts: `RetryableSession`, `classifyError`, `ProviderErrorType` enum, `ProviderError` type, `RetryConfig` type.

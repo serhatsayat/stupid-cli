@@ -4,6 +4,7 @@ export const VERSION = "0.1.0";
 export {
   AgentRole,
   LoopState,
+  ProviderErrorType,
 } from "./types/index.js";
 
 export type {
@@ -20,6 +21,8 @@ export type {
   ProjectMemoryRecord,
   DecisionRecord,
   SessionState,
+  ProviderError,
+  RetryConfig,
 } from "./types/index.js";
 
 // ─── Config ──────────────────────────────────────────────────
@@ -84,6 +87,12 @@ export { StateMachine } from "./workflow/state-machine.js";
 // ─── Infrastructure ──────────────────────────────────────────
 export { ActivityLogger } from "./infrastructure/activity-logger.js";
 export { CrashRecovery } from "./infrastructure/crash-recovery.js";
+export {
+  RetryableSession,
+  classifyError,
+  DEFAULT_RETRY_CONFIG,
+} from "./infrastructure/provider-retry.js";
+export type { RetryResult } from "./infrastructure/provider-retry.js";
 
 // ─── Memory ─────────────────────────────────────────────────
 export { ProjectMemory } from "./memory/project-memory.js";

@@ -122,6 +122,26 @@ describe("classifyError", () => {
       retryable: false,
     },
 
+    // Additional transient patterns
+    {
+      label: "server_error from 502 Bad Gateway",
+      input: new Error("502 Bad Gateway"),
+      expectedType: ProviderErrorType.ServerError,
+      retryable: true,
+    },
+    {
+      label: "auth_error from 401 Unauthorized",
+      input: new Error("401 Unauthorized"),
+      expectedType: ProviderErrorType.AuthError,
+      retryable: false,
+    },
+    {
+      label: "network_error from 'network error' message",
+      input: new Error("network error"),
+      expectedType: ProviderErrorType.NetworkError,
+      retryable: true,
+    },
+
     // Fallback
     {
       label: "unknown error",
@@ -169,6 +189,26 @@ describe("classifyError", () => {
   it("returns undefined retryAfterMs when no hint present", () => {
     const result = classifyError(new Error("rate limit exceeded"));
     expect(result.retryAfterMs).toBeUndefined();
+  });
+
+  it("handles null input", () => {
+    const result = classifyError(null);
+    expect(result.errorType).toBe(ProviderErrorType.Unknown);
+    expect(result.retryable).toBe(false);
+    expect(result.originalMessage).toBe("null");
+  });
+
+  it("handles undefined input", () => {
+    const result = classifyError(undefined);
+    expect(result.errorType).toBe(ProviderErrorType.Unknown);
+    expect(result.retryable).toBe(false);
+    expect(result.originalMessage).toBe("undefined");
+  });
+
+  it("preserves originalMessage from Error.message", () => {
+    const msg = "rate limit exceeded on model claude-3-opus";
+    const result = classifyError(new Error(msg));
+    expect(result.originalMessage).toBe(msg);
   });
 });
 
@@ -242,6 +282,22 @@ describe("RetryableSession", () => {
     const result = await retryable.prompt("hello");
     expect(result.success).toBe(false);
     expect(result.error?.errorType).toBe(ProviderErrorType.AuthError);
+    expect(result.error?.retryable).toBe(false);
+    expect(result.attempts).toBe(1);
+    expect(session.prompt).toHaveBeenCalledOnce();
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it("aborts immediately on invalid_request error", async () => {
+    const session = {
+      prompt: vi.fn().mockRejectedValue(new Error("Bad Request: missing required field")),
+    };
+    const onRetry = vi.fn();
+    const retryable = new RetryableSession(session, undefined, onRetry);
+
+    const result = await retryable.prompt("hello");
+    expect(result.success).toBe(false);
+    expect(result.error?.errorType).toBe(ProviderErrorType.InvalidRequest);
     expect(result.error?.retryable).toBe(false);
     expect(result.attempts).toBe(1);
     expect(session.prompt).toHaveBeenCalledOnce();
@@ -379,6 +435,25 @@ describe("RetryableSession", () => {
       }),
       10, // delay ms
     );
+  });
+
+  it("handles zero maxRetries (no retry)", async () => {
+    const session = {
+      prompt: vi.fn().mockRejectedValue(new Error("rate limit exceeded")),
+    };
+    const onRetry = vi.fn();
+    const retryable = new RetryableSession(
+      session,
+      { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 1000, jitterFactor: 0 },
+      onRetry,
+    );
+
+    const result = await retryable.prompt("hello");
+    expect(result.success).toBe(false);
+    expect(result.error?.errorType).toBe(ProviderErrorType.RateLimit);
+    expect(result.attempts).toBe(1);
+    expect(session.prompt).toHaveBeenCalledOnce();
+    expect(onRetry).not.toHaveBeenCalled();
   });
 
   it("applies jitter within expected bounds", async () => {
