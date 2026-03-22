@@ -1,0 +1,23 @@
+{
+  "name": "@stupid/pi-extension",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "keywords": ["pi-package"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@stupid/core": "*"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0"
+  }
+}

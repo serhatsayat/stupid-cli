@@ -1,6 +1,7 @@
 {
   "name": "stupid-monorepo",
   "private": true,
+  "packageManager": "npm@11.6.2",
   "workspaces": [
     "packages/*"
   ],
