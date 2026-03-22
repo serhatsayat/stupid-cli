@@ -18,7 +18,12 @@ coverage/
 .bg-shell/
 
 # ── GSD baseline (auto-generated) ──
-.gsd
+# GSD runtime (auto-generated, not tracked)
+.gsd/runtime/
+.gsd/activity/
+.gsd/worktrees/
+.gsd/browser-state/
+.gsd/browser-baselines/
 .DS_Store
 Thumbs.db
 *.swp
