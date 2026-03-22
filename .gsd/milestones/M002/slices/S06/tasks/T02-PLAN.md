@@ -67,6 +67,13 @@ The test imports modules directly (not via the barrel `index.ts`) to avoid mock 
 - `packages/core/src/context/file-selector.ts` — FileSelector class
 - `packages/cli/src/context.ts` — reference for how buildContext wires everything (modified in T01)
 
+## Observability Impact
+
+- **New test signal**: `e2e-integration.test.ts` exercises the real Orchestrator pipeline end-to-end, validating plan structure and Doctor health post-execution. Future agents can run this test with a real API key to verify the assembled system.
+- **Skip visibility**: When ANTHROPIC_API_KEY is absent, vitest reports the suite as "1 skipped" — no misleading pass/fail signals.
+- **Doctor verification**: The test runs `Doctor.check()` on the `.stupid/` state directory created during execution, verifying SQLite DB integrity (routing.db, MEMORY.db), no stale locks, and no corrupt state files.
+- **Failure state**: If the pipeline produces an invalid plan (no slices, no tasks, empty milestone title), the test fails with specific assertion messages identifying which structural check failed. If Doctor detects corruption, the failed checks are surfaced via `expect(failedChecks).toEqual([])`.
+
 ## Expected Output
 
 - `packages/core/src/__tests__/e2e-integration.test.ts` — new file: ANTHROPIC_API_KEY-gated integration test proving full pipeline with real API

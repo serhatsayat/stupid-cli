@@ -48,7 +48,7 @@
   - Verify: `npx vitest run` — all 511 existing tests still pass; `npm run build && npm run typecheck` clean
   - Done when: buildContext returns complexityClassifier and routingHistory; BaseAgent uses RetryableSession; TaskRouter receives classifier+history deps; 511 tests pass; build clean
 
-- [ ] **T02: Create ANTHROPIC_API_KEY-gated end-to-end integration test** `est:1h`
+- [x] **T02: Create ANTHROPIC_API_KEY-gated end-to-end integration test** `est:1h`
   - Why: R033 requires proof that the assembled pipeline works with real Anthropic API calls. This test is the milestone's final acceptance evidence.
   - Files: `packages/core/src/__tests__/e2e-integration.test.ts`
   - Do: (1) Create test file with `describe.skipIf(!process.env.ANTHROPIC_API_KEY)`. (2) Set up temp git repo with initial commit (follow worktree-manager-integration.test.ts pattern). (3) Build StupidConfig pointing at temp repo, wire full OrchestratorContext via imports. (4) Run `Orchestrator.run("add a hello world function")` and assert: plan has ≥1 slice, slices have tasks, agent outputs are non-empty. (5) Assert Doctor.check() passes on post-run state. (6) Verify test gracefully skips without API key. (7) Use 180s timeout for real API calls. Constraint: Import modules directly (not via barrel) to avoid mock interference from other test files.
